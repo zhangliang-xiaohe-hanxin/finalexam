@@ -12,6 +12,9 @@ func main() {
 	port := os.Getenv("PORT")
 	
 	cus := &customer.Customer{}
-	r := routes.Route{ cus, hostName}.Init()
+	route := routes.Route{ cus, hostName}
+	r := route.Init()
 	r.Run(fmt.Sprintf(":%s", port))
+	
+	defer route.DestroySession()
 }

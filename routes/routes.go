@@ -22,19 +22,17 @@ type Route struct {
 	DBHost string
 }
 
-func (r Route) psqlPool() gin.HandlerFunc {
+func (r Route) createSession() {
 
-	return func (c *gin.Context) {
-		db, err := sql.Open("postgres", r.DBHost)
-		if err != nil {
-			log.Fatal("can't open", err.Error())
-		}
-
-		defer db.Close()
-
-		c.Set("session", db)
-		c.Next()
+	session, err := sql.Open("postgres", r.DBHost)
+	if err != nil {
+		log.Fatal("can't open", err.Error())
 	}
+	db.Session = session
+}
+
+func (r Route) DestroySession() {
+	db.Session.Close()
 }
 
 func authMiddleware(c *gin.Context){
@@ -48,9 +46,9 @@ func authMiddleware(c *gin.Context){
 
 func (r Route)Init() *gin.Engine {
 	db.CreateDB(r.DBHost)
+	r.createSession()
 	apiMethod := r.API
 	routes := gin.Default()
-	routes.Use(r.psqlPool())
 	routes.Use(authMiddleware)
 	routes.GET("/customers", apiMethod.GetStore)
 	routes.GET("/customers/:id", apiMethod.GetStoreByID)

@@ -11,12 +11,7 @@ import (
 
 func (m *Customer) Insert(c *gin.Context) {
 
-	session, err := db.GetSession(c)
-	if err != nil {
-		log.Println(err)
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": "Cannot Connect Database"})
-		return
-	}
+	session := db.Session
 
 	if err := c.ShouldBindJSON(&m); err != nil {
 		log.Println(err)
@@ -24,7 +19,7 @@ func (m *Customer) Insert(c *gin.Context) {
 		return
 	}
 
-	err = insetIntoDB(m, session)
+	err := insetIntoDB(m, session)
 	if err != nil {
 		log.Println(err)
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Cannot Insert"})

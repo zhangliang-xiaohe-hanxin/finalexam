@@ -11,12 +11,7 @@ import (
 
 func (m *Customer) UpdateStoreByID(c *gin.Context) {
 
-	session, err := db.GetSession(c)
-	if err != nil {
-		log.Println(err)
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Cannot Get Session DB"})
-		return
-	}
+	session := db.Session
 
 	id := c.Param("id")
 	num, err := strconv.Atoi(id)

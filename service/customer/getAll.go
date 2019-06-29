@@ -10,12 +10,7 @@ import (
 
 func (m Customer) GetStore(c *gin.Context) {
 
-	session, err := db.GetSession(c)
-	if err != nil {
-		log.Println(err)
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"message": "Cannot Get Session DB"})
-		return
-	}
+	session := db.Session
 
 	customers, err := getAll(m, session)
 	if err != nil {
