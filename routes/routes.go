@@ -3,6 +3,8 @@ package routes
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/zhangliangxiaohehanxin/finalexam/database"
+	"net/http/httputil"
+	"bytes"
 	"database/sql"
 	_ "github.com/lib/pq"
 	"log"
@@ -20,6 +22,17 @@ type APIMethod interface {
 type Route struct {
 	API		APIMethod
 	DBHost string
+}
+
+
+type buffer struct {
+	gin.ResponseWriter
+	response *bytes.Buffer
+}
+
+func (b buffer) Write(data []byte) (int, error) {
+	b.response.Write(data)
+	return b.ResponseWriter.Write(data)
 }
 
 func (r Route) createSession() {
@@ -44,11 +57,28 @@ func authMiddleware(c *gin.Context){
 	c.Next()
 }
 
+func monitorAPI(c *gin.Context) {
+	req, err := httputil.DumpRequest(c.Request, true)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{ "message": "Cannot Log Your Request"})
+		return
+	}
+
+	log.Printf("\n\nrequest: %s\n", req)
+	buff := bytes.Buffer{}
+	bw := buffer{c.Writer, &buff}
+	c.Writer = bw
+	c.Next()
+	log.Printf("\n\nresponse: %s\n\n", bw.response.String())
+
+}
+
 func (r Route)Init() *gin.Engine {
 	db.CreateDB(r.DBHost)
 	r.createSession()
 	apiMethod := r.API
 	routes := gin.Default()
+	routes.Use(monitorAPI)
 	routes.Use(authMiddleware)
 	routes.GET("/customers", apiMethod.GetStore)
 	routes.GET("/customers/:id", apiMethod.GetStoreByID)
